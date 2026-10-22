@@ -1,0 +1,14 @@
+{
+  "class" : "players.PW_MCTS.PW_MCTSParams",
+  "K" : 1.0,
+  "rolloutLength" : 30,
+  "maxTreeDepth" : 99,
+  "heuristic" : {
+    "class" : "players.heuristics.SushiGoHeuristic_V5"
+  },
+  "budgetType" : "BUDGET_TIME",
+  "budget" : 100,
+  "progressiveWideningC" : 2.0,
+  "progressiveWideningAlpha" : 0.5,
+  "breakMS" : 0
+}

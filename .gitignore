@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Java compiled classes & build directories
+*.class
+target/
+build/
+.gradle/
+out/
+
+# IDE / OS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

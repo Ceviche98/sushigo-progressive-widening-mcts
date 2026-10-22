@@ -1,0 +1,24 @@
+{
+  "class": "players.rhea.RHEAParams",
+
+  "horizon": 24,
+  "discountFactor": 0.93,
+
+  "populationSize": 16,
+  "eliteCount": 2,
+  "childCount": 14,
+
+  "selectionType": "TOURNAMENT",
+  "tournamentSize": 3,
+
+  "crossoverType": "UNIFORM",
+  "shiftLeft": true,
+
+  "mutationCount": 3,
+  "useMAST": true,
+
+  "budgetType": "BUDGET_TIME",
+  "budget": 100,
+  "breakMS": 0,
+  "seedFromHeuristic": 10
+}
