@@ -7,7 +7,7 @@
 [![CI](https://github.com/Ceviche98/sushigo-progressive-widening-mcts/actions/workflows/ci.yml/badge.svg)](https://github.com/Ceviche98/sushigo-progressive-widening-mcts/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-slate.svg)](LICENSE)
 
-> **Research & Engineering Repository (ECS7032P — Artificial Intelligence in Games)**  
+> **Research & Engineering Repository (ECS7032P: Artificial Intelligence in Games)**  
 > **Authors:** Oscar More, Mohamed, and Airam  
 > **Target Environment:** *Sushi Go!* within the [Tabletop Games (TAG)](https://github.com/GAIGResearch/TabletopGames) General Game Playing Framework
 
@@ -15,12 +15,12 @@
 
 ## Abstract
 
-Drafting card games such as ***Sushi Go!*** provide a rich microcosm for studying **online statistical planning under uncertainty**. Each round begins with high stochasticity due to fresh deck shuffles and hidden opponent hands. However, after $n_{\text{players}} - 1$ card passes, the round undergoes a phase transition into **nearly perfect information**, where the exact pool of circulating cards becomes observable. Decisions involve non-zero-sum multi-player competition and delayed, non-linear rewards—ranging from *Sashimi* triplets and *Tempura* pairs to *Wasabi–Nigiri* sequential multipliers, *Dumpling* threshold progressions, and end-of-game *Pudding* majority/minority penalties.
+Drafting card games such as ***Sushi Go!*** provide a rich microcosm for studying **online statistical planning under uncertainty**. Each round begins with high stochasticity due to fresh deck shuffles and hidden opponent hands. However, after $n_{\text{players}} - 1$ card passes, the round undergoes a phase transition into **nearly perfect information**, where the exact pool of circulating cards becomes observable. Decisions involve non-zero-sum multi-player competition and delayed, non-linear rewards-ranging from *Sashimi* triplets and *Tempura* pairs to *Wasabi-Nigiri* sequential multipliers, *Dumpling* threshold progressions, and end-of-game *Pudding* majority/minority penalties.
 
 In this project, we formulate *Sushi Go!* as an online planning problem under a strict **100 ms per-move compute budget** (`BUDGET_TIME`) and investigate three core algorithmic pillars:
 1. **Progressive Widening Monte Carlo Tree Search (`PW_MCTS`):** A custom MCTS architecture that throttles tree branching via $k_{\max}(s) = C \cdot N(s)^\alpha$ and replaces uniform random node expansion with **heuristic-guided action expansion** (`guidedExpand`).
 2. **Domain-Specific State Heuristics (`V2` Heavy vs. `V4` Medium vs. `V5` Light):** An ablation of three progressively streamlined heuristic evaluators isolating the **Simulation Throughput vs. Evaluation Complexity Trade-off** in determinized open-loop/closed-loop MCTS.
-3. **Rolling Horizon Evolutionary Algorithms (`RHEA_B`) vs. Tree Search Baselines:** Large-scale 3-player tournament evaluations (1,000–2,000 games per bracket) benchmarking evolutionary horizon planning with MAST and shift-buffer reuse against UCT and Progressive Widening MCTS.
+3. **Rolling Horizon Evolutionary Algorithms (`RHEA_B`) vs. Tree Search Baselines:** Large-scale 3-player tournament evaluations (1,000-2,000 games per bracket) benchmarking evolutionary horizon planning with MAST and shift-buffer reuse against UCT and Progressive Widening MCTS.
 
 ---
 
@@ -92,7 +92,7 @@ A critical strategic factor is the **direction of hand passing**: while standard
 
 ### 2.1 Progressive Widening MCTS (`players.PW_MCTS`)
 
-Standard Monte Carlo Tree Search with Upper Confidence Bounds for Trees (UCT) must expand **every available legal action** at a node before applying UCB1 selection to deepen the tree. In *Sushi Go!*, early-round hands contain $9\text{--}10$ cards, and holding an active *Chopsticks* card expands the legal action space to $H + \binom{H}{2}$ combinations (up to $45$ legal moves). Under a tight **100 ms real-time budget**, standard UCT suffers from severe shallow exploration—wasting forward-model calls on clearly suboptimal cards (e.g., playing *Wasabi* on the final turn of a round or drafting a first *Sashimi* with two turns remaining).
+Standard Monte Carlo Tree Search with Upper Confidence Bounds for Trees (UCT) must expand **every available legal action** at a node before applying UCB1 selection to deepen the tree. In *Sushi Go!*, early-round hands contain $9\text{--}10$ cards, and holding an active *Chopsticks* card expands the legal action space to $H + \binom{H}{2}$ combinations (up to $45$ legal moves). Under a tight **100 ms real-time budget**, standard UCT suffers from severe shallow exploration-wasting forward-model calls on clearly suboptimal cards (e.g., playing *Wasabi* on the final turn of a round or drafting a first *Sashimi* with two turns remaining).
 
 To overcome this bottleneck, we implemented **Progressive Widening MCTS** ([`PW_MCTSPlayer.java`](src/main/java/players/PW_MCTS/PW_MCTSPlayer.java), [`PW_MCTSParams.java`](src/main/java/players/PW_MCTS/PW_MCTSParams.java), [`PW_TreeNode.java`](src/main/java/players/PW_MCTS/PW_TreeNode.java)):
 
@@ -140,7 +140,7 @@ Because `state.getGameScore(i)` in TAG already accounts for scored Nigiris, comp
 
 ![Progressive Widening & Heuristic Engineering Analysis](docs/assets/heuristic_ablation_comparison.png)
 
-### 3.1 `SushiGoHeuristic_V2` (Heavy — Dynamic Hypergeometric PMF + Perfect Information)
+### 3.1 `SushiGoHeuristic_V2` (Heavy: Dynamic Hypergeometric PMF + Perfect Information)
 Implemented in [`SushiGoHeuristic_V2.java`](src/main/java/players/heuristics/SushiGoHeuristic_V2.java) (610 lines), `V2` performs exact probabilistic card counting across rounds:
 * **Dynamic Hypergeometric Weight Recalculation:** At the start of each round $r \in \{0, 1, 2\}$, `recalculateBaseWeights()` tracks all cards played in prior rounds (`getPlayedCardTypesAllGame()`) to determine the remaining population $N = 108 - r \cdot (n_{\text{players}} \cdot H)$ and remaining copies $K_c$ of each card type $c$. Given sample size $n = n_{\text{players}} \cdot H$ dealt into the current round, it evaluates the exact **Hypergeometric Probability Mass Function**:
 
@@ -150,19 +150,19 @@ $$P(X = k) = \frac{\binom{K_c}{k}\binom{N - K_c}{n - k}}{\binom{N}{n}}$$
 * **Perfect Information Phase Switch ($t \ge n_{\text{players}} - 1$):** Once all hands have been seen (`getPerfectInfoTurn`), `V2` switches from probabilistic expectations to scanning all player hands (`state.getPlayerHands()`) to verify whether the exact playable pool `myRemainder + cardsInAllHands` can still complete an open *Tempura*, *Sashimi*, or *Wasabi*. If impossible, the incomplete card's potential immediately collapses to $0.1\text{ pts}$ (dead card).
 * **Relative Maki & Round-3 Pudding Logic:** Evaluates exact 1st/2nd place Maki splits (`6.0 / (nFirstPlaceTies + 1)` and `3.0 / (nSecondPlaceTies + 1)`) from Turn 2 onward, and boosts *Pudding* valuation to $6.0\text{ pts/card}$ in Round 3 when trailing the leader.
 
-### 3.2 `SushiGoHeuristic_V4` (Medium — Hybrid Fast + Opponent Denial Bonus)
+### 3.2 `SushiGoHeuristic_V4` (Medium: Hybrid Fast + Opponent Denial Bonus)
 Implemented in [`SushiGoHeuristic_V4.java`](src/main/java/players/heuristics/SushiGoHeuristic_V4.java) (390 lines), `V4` eliminates the combinatorial $\binom{N}{n}$ hypergeometric overhead while preserving late-round tactical precision:
 * **Static Expected-Value Base Weights:** Replaces round-start hypergeometric recalculations with pre-computed expected value constants (`Tempura = 1.94`, `Sashimi = 1.47`, `Wasabi = 4.20`, `Pudding = 1.60`, `Chopsticks = 1.50`, `Dumpling = 0.25`).
 * **Perfect-Information Opponent Denial Bonus (`denialBonus`):** During the perfect-information phase ($t \ge n_{\text{players}} - 1$), in addition to checking if the agent's own sets can be completed, `V4` inspects opponent tableaus (`oppRemainder`). If drafting a *Tempura* or *Sashimi* leaves `oppPlayablePool < neededForSet` for an opponent sitting at $1\text{ Tempura}$ or $2\text{ Sashimi}$, `V4` awards an explicit **Denial Bonus of $+5.0\text{ pts}$ (Tempura) or $+10.0\text{ pts}$ (Sashimi)** for starving the opponent's set.
 
-### 3.3 `SushiGoHeuristic_V5` (Light — Pure Static $O(1)$ Evaluator, Tournament Winner)
+### 3.3 `SushiGoHeuristic_V5` (Light: Pure Static $O(1)$ Evaluator, Tournament Winner)
 Implemented in [`SushiGoHeuristic_V5.java`](src/main/java/players/heuristics/SushiGoHeuristic_V5.java) (189 lines), `V5` strips away all $O(P \cdot H)$ hand-scanning loops and opponent comparisons in favor of ultra-fast **$O(1)$ constant-time arithmetic**:
-* **Wasabi:** Valued at $4.20\text{ pts}$ per open Wasabi during early turns ($t \le 2$, turns 1–3) and decayed to $0.10\text{ pts}$ thereafter ($t \ge 3$).
+* **Wasabi:** Valued at $4.20\text{ pts}$ per open Wasabi during early turns ($t \le 2$, turns 1-3) and decayed to $0.10\text{ pts}$ thereafter ($t \ge 3$).
 * **Tempura & Sashimi:** Awards $1.94\text{ pts}$ for an odd Tempura remainder ($c \bmod 2 == 1$) and $1.47 \times (c \bmod 3)\text{ pts}$ for 1 or 2 uncompleted Sashimi cards.
 * **Maki & Pudding:** Linearly values Maki icons at $0.60 \times \text{icons}$ and persistent Puddings at $1.60 \times \text{count}$ across all rounds.
 * **Chopsticks & Dumplings:** Values active Chopsticks at $1.50\text{ pts}$ through Turn 5 ($t \le 4$, decayed to $0.10\text{ pts}$ on Turn 6+) and adds a $+0.25\text{ pt}$ continuation bonus when holding $1 \le \text{Dumplings} \le 4$.
 
-### 3.4 Why `PW_MCTS + Light Heuristic V5` Wins: The Speed–Accuracy Trade-off
+### 3.4 Why `PW_MCTS + Light Heuristic V5` Wins: The Speed: Accuracy Trade-off
 
 A key empirical finding of our development is that **`PW_MCTS` paired with the streamlined `V5` Light Heuristic ([`PW_Heuristics_Light_WINNER.json`](configs/PW_Heuristics_Light_WINNER.json)) outperforms both `BasicMCTS` and heavier heuristic variants (`V2`, `V4`) under a fixed 100 ms decision budget**:
 
@@ -171,13 +171,13 @@ A key empirical finding of our development is that **`PW_MCTS` paired with the s
 
 #### Table 2: Heuristic Architecture Comparison (`V2` vs. `V4` vs. `V5`)
 
-| Architectural Feature | `SushiGoHeuristic_V2` (Heavy) | `SushiGoHeuristic_V4` (Medium) | `SushiGoHeuristic_V5` (Light — **WINNER**) |
+| Architectural Feature | `SushiGoHeuristic_V2` (Heavy) | `SushiGoHeuristic_V4` (Medium) | `SushiGoHeuristic_V5` (Light: **WINNER**) |
 | :--- | :--- | :--- | :--- |
 | **Base Weight Computation** | Dynamic per-round Hypergeometric PMF $\binom{K}{k}\binom{N-K}{n-k}/\binom{N}{n}$ | Static Expected Value (`Tempura=1.94`, `Sashimi=1.47`) | Static Expected Value (`Tempura=1.94`, `Sashimi=1.47`) |
 | **Late-Round Hand Scanning** | $O(P \cdot H)$ scan of `getPlayerHands()` for $t \ge P-1$ | $O(P \cdot H)$ scan of `getPlayerHands()` for $t \ge P-1$ | None ($O(1)$ turn-index threshold) |
 | **Opponent Denial Modeling** | Implicit via rollout score differences | Explicit $+5.0\text{ pt}$ Tempura / $+10.0\text{ pt}$ Sashimi bonus | Implicit via deeper `PW_MCTS` tree search |
 | **Maki Roll Valuation** | Turn $<2$: Piece-wise; Turn $\ge 2$: Exact $O(P)$ rank & tie split | Turn $<2$: Piece-wise; Turn $\ge 2$: Exact $O(P)$ rank & tie split | $O(1)$ linear valuation ($0.60 \times \text{icons}$) |
-| **Pudding Valuation** | Rounds 1–2: $1.60\text{ pts}$; Round 3: $6.0\text{ pts}$ if losing else $0.5\text{ pts}$ | Rounds 1–2: $1.60\text{ pts}$; Round 3: $6.0\text{ pts}$ if losing else $0.5\text{ pts}$ | $O(1)$ persistent linear valuation ($1.60 \times \text{count}$) |
+| **Pudding Valuation** | Rounds 1-2: $1.60\text{ pts}$; Round 3: $6.0\text{ pts}$ if losing else $0.5\text{ pts}$ | Rounds 1-2: $1.60\text{ pts}$; Round 3: $6.0\text{ pts}$ if losing else $0.5\text{ pts}$ | $O(1)$ persistent linear valuation ($1.60 \times \text{count}$) |
 | **Wasabi & Chopsticks Decay** | Wasabi decays at $t > 3$; Chopsticks $+50\%$ boost at $t \in [2,4]$ | Wasabi decays at $t > 3$; Chopsticks $+50\%$ boost at $t \in [2,4]$ | Wasabi $4.20 \to 0.10$ ($t > 2$); Chopsticks $1.50 \to 0.10$ ($t > 4$) |
 | **Per-Call Time Complexity** | $\mathcal{O}(K_{\max} + P \cdot H)$ | $\mathcal{O}(P \cdot H)$ | **$\mathcal{O}(1)$ (Constant Time)** |
 
@@ -194,7 +194,7 @@ All benchmark tournaments in our study ([`stats.pdf`](scripts/validate_agents_an
 | Tournament Bracket | Matchup / Agent | Win Rate (%) | Mean Score (pts) | Games Evaluated |
 | :--- | :--- | :---: | :---: | :---: |
 | **RHEA vs. Baseline Performance** | **`rhea_B` vs. `BasicMCTS`** | **36.7%** | **45.91** | 2,000 |
-| *(Head-to-Head & Aggregate)* | `BasicMCTS` (Overall Baseline) | 35.7% | 45.87 | — |
+| *(Head-to-Head & Aggregate)* | `BasicMCTS` (Overall Baseline) | 35.7% | 45.87 | - |
 | | `rhea_A` vs. `BasicMCTS` | 29.4% | 43.72 | 2,000 |
 | | `rhea_C` vs. `BasicMCTS` | 29.4% | 43.54 | 1,000 |
 | **RHEA-Only Intra-Family Bracket** | **`rhea_B`** | **38.5%** | **46.52** | 1,000 |
@@ -214,8 +214,8 @@ All benchmark tournaments in our study ([`stats.pdf`](scripts/validate_agents_an
 
 1. **Strong Linear Coupling Between Mean Score and Win Rate ($r = 0.91$):** Across all 16 tournament entries (Panel B above), mean end-of-game points correlate strongly with win percentage ($r = 0.91$), with the 33.3% 3-player parity threshold corresponding to roughly $\approx 45.0\text{ pts}$ per game.
 2. **`RHEA_B` Dominates Evolutionary Counterparts:** Among the Rolling Horizon Evolutionary variants, `rhea_B` ([`configs/RHEA_B.json`](configs/RHEA_B.json)) consistently outperforms `rhea_A` and `rhea_C`, achieving a **38.5% win rate (46.52 mean score)** in the RHEA-only bracket and edging out `BasicMCTS` (**36.7% vs. 35.7%**) in the `rhea_A + rhea_B + BasicMCTS` bracket.
-3. **Tree Search Robustness in Multi-Player Dynamics:** When paired against weaker evolutionary opponents (`rhea_B + rhea_C + BasicMCTS` and `rhea_A + rhea_C + BasicMCTS`), MCTS (`BasicMCTS`) exploits suboptimal opponent drafting to capture **40.9%–41.2% win rates**.
-4. **Progressive Widening + Light Heuristic V5 (`PW_Heuristics_Light_WINNER.json`):** Combining `BasicMCTS`'s tree-search stability with Progressive Widening ($C = 2.0, \alpha = 0.5$) and `SushiGoHeuristic_V5`-guided expansion (`K = 1.0`, `rolloutLength = 30`, `maxTreeDepth = 99`) yields our overall winning tournament agent—concentrating simulation budget on high-synergy card drafts early in the round while preserving deep lookahead as information becomes deterministic.
+3. **Tree Search Robustness in Multi-Player Dynamics:** When paired against weaker evolutionary opponents (`rhea_B + rhea_C + BasicMCTS` and `rhea_A + rhea_C + BasicMCTS`), MCTS (`BasicMCTS`) exploits suboptimal opponent drafting to capture **40.9%-41.2% win rates**.
+4. **Progressive Widening + Light Heuristic V5 (`PW_Heuristics_Light_WINNER.json`):** Combining `BasicMCTS`'s tree-search stability with Progressive Widening ($C = 2.0, \alpha = 0.5$) and `SushiGoHeuristic_V5`-guided expansion (`K = 1.0`, `rolloutLength = 30`, `maxTreeDepth = 99`) yields our overall winning tournament agent-concentrating simulation budget on high-synergy card drafts early in the round while preserving deep lookahead as information becomes deterministic.
 
 ### 4.3 Agent Configuration Reference (`configs/`)
 
@@ -253,7 +253,7 @@ sushigo-progressive-widening-mcts/
 │   └── heuristics/
 │       ├── SushiGoHeuristic_V2.java                 # Heavy Heuristic (Dynamic Hypergeometric + Perfect Info)
 │       ├── SushiGoHeuristic_V4.java                 # Medium Heuristic (Static Base + Perfect Info & Denial)
-│       └── SushiGoHeuristic_V5.java                 # Light Heuristic (O(1) Static Evaluator — WINNER)
+│       └── SushiGoHeuristic_V5.java                 # Light Heuristic (O(1) Static Evaluator: WINNER)
 └── tests/
     └── test_configs_and_sources.py                  # Pytest verification suite for configs, formulas & assets
 ```
@@ -297,8 +297,8 @@ pytest -v
 
 ## 6. References
 
-1. **Gelly, S., & Silver, D. (2011).** *Monte-Carlo tree search and rapid action value estimation in computer Go.* Artificial Intelligence, 175(11), 1856–1875.
+1. **Gelly, S., & Silver, D. (2011).** *Monte-Carlo tree search and rapid action value estimation in computer Go.* Artificial Intelligence, 175(11), 1856-1875.
 2. **Lucas, S. M., Liu, J., Bravi, I., Gaina, R. D., Woodward, J., Volz, V., & Perez-Liebana, D. (2019).** *Efficient evolutionary methods for game agent optimisation: Model-based is best.* arXiv preprint arXiv:1901.00723.
-3. **Perez, D., Samothrakis, S., Lucas, S., & Rohlfshagen, P. (2013).** *Rolling horizon evolution versus tree search for navigation in single-player real-time games.* In Proceedings of the 15th Annual Conference on Genetic and Evolutionary Computation (GECCO), pp. 351–358.
+3. **Perez, D., Samothrakis, S., Lucas, S., & Rohlfshagen, P. (2013).** *Rolling horizon evolution versus tree search for navigation in single-player real-time games.* In Proceedings of the 15th Annual Conference on Genetic and Evolutionary Computation (GECCO), pp. 351-358.
 4. **Perez-Liebana, D., Samothrakis, S., Togelius, J., Schaul, T., & Lucas, S. (2016).** *General video game AI: Competition, challenges and opportunities.* In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 30.
-5. **Soemers, D. J. N. J., Sironi, C. F., Schuster, T., & Winands, M. H. M. (2016).** *Enhancements for real-time Monte-Carlo tree search in general video game playing.* In 2016 IEEE Conference on Computational Intelligence and Games (CIG), pp. 1–8.
+5. **Soemers, D. J. N. J., Sironi, C. F., Schuster, T., & Winands, M. H. M. (2016).** *Enhancements for real-time Monte-Carlo tree search in general video game playing.* In 2016 IEEE Conference on Computational Intelligence and Games (CIG), pp. 1-8.
